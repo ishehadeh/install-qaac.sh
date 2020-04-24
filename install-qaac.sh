@@ -40,8 +40,8 @@ info() {
     log INFO "$1"
 }
 
-# USAGE: fail <MESSAGE>
-#   log an error and exit
+# USAGE: error <MESSAGE>
+#   log an error, but _do not_ exit
 error() {
     log ERROR "$1"
 }
