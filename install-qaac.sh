@@ -32,7 +32,7 @@ usage() {
 
 # USAGE: log <LEVEL> <MESSAGE>
 log() {
-    printf "[%s] [%s] %s\n" "$PROG_NAME" "$1" "$2"
+    printf '[%s] [%s] %s\n' "$PROG_NAME" "$1" "$2"
 }
 
 # USAGE: info <MESSAGE>
@@ -92,7 +92,7 @@ install_qaac() {
         qaac_bin_root="qaac_$1/x64"
     fi
 
-    "$QAAC_7ZIP" e -y "$qaac_archive_path"  \
+    "$QAAC_7ZIP" e -y "$qaac_archive_path" \
         -i"!$qaac_bin_root/*.exe" \
         -i"!$qaac_bin_root/*.dll" \
         -o"$QAAC_INSTALL_DIR"
@@ -124,7 +124,7 @@ install_coreaudio_libraries() {
     info "extracting DLLs from itunes installer"
     "$QAAC_7ZIP" e -y "$itunes_installer_path" "$apple_support_installer" -o"$QAAC_WORK_DIR"
 
-    "$QAAC_7ZIP" e -y "$QAAC_WORK_DIR/$apple_support_installer"\
+    "$QAAC_7ZIP" e -y "$QAAC_WORK_DIR/$apple_support_installer" \
         -i"!*${apple_prefix}ASL.dll" \
         -i"!*${apple_prefix}CoreAudioToolbox.dll" \
         -i"!*${apple_prefix}CoreFoundation.dll" \
@@ -168,7 +168,7 @@ install_libflac() {
     flac_archive_path="$QAAC_WORK_DIR/$flac_archive_name"
     download "http://www.rarewares.org/files/lossless/$flac_archive_name" "$flac_archive_path"
     "$QAAC_7ZIP" x -y "$flac_archive_path" "libFLAC_dynamic.dll" -o"$QAAC_INSTALL_DIR"
-    
+
     info "finished install libFLAC"
 }
 
@@ -236,7 +236,6 @@ install_libsndfile() {
     info "finished install libsndfile"
 }
 
-
 if [ -z "$1" ] && [ -z "$2" ]; then
     usage
     exit 0
@@ -303,7 +302,6 @@ if [ ! -x "$QAAC_WINEBOOT" ]; then
     dep_error=1
 fi
 
-
 [ "$dep_error" -eq 0 ] || fail "dependency error(s)"
 
 QAAC_ARCH="$1"
@@ -327,7 +325,6 @@ fi
 
 # wine required a full path
 QAAC_WINEPREFIX="$(readlink -f "$QAAC_WINEPREFIX")"
-
 
 QAAC_WORK_DIR=${QAAC_WORK_DIR:="$QAAC_WINEPREFIX/drive_c/qaac-sh-wd"}
 if [ "$QAAC_ARCH" = "32" ]; then
@@ -383,10 +380,10 @@ if [ "$QAAC_TAK_VERSION" != "disabled" ]; then
     fi
 fi
 
-if [ "$QAAC_ARCH" == "32" ]; then
-    QAAC_WIN_PATH="C:\Program Files (x86)\qaac\qaac.exe"
+if [ "$QAAC_ARCH" = "32" ]; then
+    QAAC_WIN_PATH='C:\Program Files (x86)\qaac\qaac.exe'
 else
-    QAAC_WIN_PATH="C:\Program Files\qaac\qaac64.exe"
+    QAAC_WIN_PATH='C:\Program Files\qaac\qaac64.exe'
 fi
 
 info "checking qaac"
