@@ -68,7 +68,7 @@ QAAC_XVFB=1 install-qaac.sh 32 2.68
 #### Download files using Curl, don't install libsndfile
 
 ```sh
-QAAC_CURL=/usr/bin/curl QAAC_LIBSNDFILE=disabled install-qaac.sh 64 2.68
+QAAC_CURL=/usr/bin/curl QAAC_LIBSNDFILE_VERSION=disabled install-qaac.sh 64 2.68
 ```
 
 ## Sources for Binaries
