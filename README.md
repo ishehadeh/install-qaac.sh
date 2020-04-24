@@ -8,6 +8,9 @@ This script installs [qaac](https://github.com/nu774/qaac) on linux.
 - `7zip`: https://www.7-zip.org/
 - `wget`: https://www.gnu.org/software/wget
 
+Optional Dependencies:
+- `Xvrb`: allows X11 programs to be run headless
+
 Most distributions will have these applications in their package managers.
 
 ## Usage
@@ -25,7 +28,7 @@ A full list can be found on the [release page](https://github.com/nu774/qaac/rel
 
 __Location Settings:__
 - QAAC_WINEPREFIX: set the wine directory for `qaac`. [default: `WINEPREFIX` or `$HOME/.wine`]
-- QAAC_WORK_DIR: set the working directory, this is where logs and downloaded files are kept. [default: `QAAC_WINEPREFIX/qaac-sh-wd/`] 
+- QAAC_WORK_DIR: set the working directory, this is where logs and downloaded files are kept. [default: `/tmp/qaac-sh-wd`] 
 - QAAC_INSTALL_DIR: set the directory where `qaac` and all its dependencies will be installed. [default: `QAAC_WINEPREFIX/Program Files/qaac` or `QAAC_WINEPREFIX/Program Files (x86)/qaac`]
 
 __Program Settings:__
@@ -33,6 +36,7 @@ __Program Settings:__
 - QAAC_7ZIP: path to 7z executable [default: search `PATH` for `7z`]
 - QAAC_WINE: path to wine executable [default: search `PATH` for `wine`]
 - QAAC_WINEBOOT: path to wineboot executable [default: search `PATH` for `wineboot`]
+- QAAC_XVFB: path to Xvfb executable [default: unset]
 
 __Optional Dependency Settings:__
 These libraries add support for decoding various formats.

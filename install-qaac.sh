@@ -17,8 +17,9 @@ usage() {
     echo "     QAAC_WGET ..................... path to wget executable (https://www.gnu.org/software/wget) [default: search \$PATH for 'wget']"
     echo "     QAAC_7ZIP ..................... path to 7zip executable (https://www.7-zip.org/) [default: search \$PATH for '7z']"
     echo "     QAAC_WINE ..................... path to wine executable (https://www.winehq.org/) [default: search \$PATH for 'wine']"
+    echo "     QAAC_XVFB ..................... path xvfb executable. If set, all X applications will be pointed toward a new Xvfb server [default: unset]"
     echo "     QAAC_WINEBOOT ................. path to wineboot executable (https://www.winehq.org/) [default: search \$PATH for 'wineboot']"
-    echo "     QAAC_WORK_DIR ................. directory to store logs and downloaded files [default: '\$QAAC_WINPREFIX/qaac-sh-wd']"
+    echo "     QAAC_WORK_DIR ................. directory to store logs and downloaded files [default: '/tmp/qaac-sh-wd']"
     echo "     QAAC_WINEPREFIX ............... wineprefix for qaac installation [default: '\$WINEPREFIX' or '\$HOME/.wine']"
     echo "     QAAC_INSTALL_DIR .............. directory to install qaac.exe and dynamic libraries [default: '\$QAAC_WINPREFIX/Program Files/qaac.exe' or '\$QAAC_WINPREFIX/Program Files (x86)/qaac.exe']"
     echo "     QAAC_CLOSE_LIBSNDFILE_POPUP ... set to '1' to automatically close the libsndfile popup asking for donations [default: unset]"
@@ -344,10 +345,20 @@ if [ -z "$QAAC_WINEPREFIX" ]; then
     fi
 fi
 
+if [ -n "$QAAC_XVFB" ]; then
+    if [ ! -x "$QAAC_XVFB" ]; then
+        fail "\$QAAC_XVFB is set, but is not an executable file. \$QAAC_XVFB='$QAAC_XVFB'"
+    fi
+
+    # if the window is inside a virtual frame buffer than the user can't click close manually
+    QAAC_CLOSE_LIBSNDFILE_POPUP=1
+    info "setting \$QAAC_CLOSE_LIBSNDFILE_POPUP=1, since \$QAAC_XVFB is set."
+fi
+
 # wine required a full path
 QAAC_WINEPREFIX="$(readlink -f "$QAAC_WINEPREFIX")"
 
-QAAC_WORK_DIR=${QAAC_WORK_DIR:="$QAAC_WINEPREFIX/drive_c/qaac-sh-wd"}
+QAAC_WORK_DIR=${QAAC_WORK_DIR:="/tmp/qaac-sh-wd"}
 if [ "$QAAC_ARCH" = "32" ]; then
     QAAC_INSTALL_DIR=${QAAC_INSTALL_DIR:="$QAAC_WINEPREFIX/drive_c/Program Files (x86)/qaac"}
 else
@@ -355,6 +366,8 @@ else
 fi
 
 QAAC_WGET_LOGFILE="$QAAC_WORK_DIR/qaac.wget.log"
+QAAC_XVFB_LOGFILE="$QAAC_WORK_DIR/qaac.xvfb.log"
+QAAC_XVFB_DISPLAY_FILE="$QAAC_WORK_DIR/qaac.xvfb.display"
 
 QAAC_LIBFLAC_VERSION=${QAAC_LIBFLAC_VERSION:="1.3.3"}
 QAAC_WAVPACK_VERSION=${QAAC_WAVPACK_VERSION:="5.3.0"}
@@ -365,6 +378,7 @@ info "beginning installation"
 echo "   QAAC_WGET='$QAAC_WGET'"
 echo "   QAAC_7ZIP='$QAAC_7ZIP'"
 echo "   QAAC_WINE='$QAAC_WINE'"
+echo "   QAAC_XVFB='$QAAC_XVFB'"
 echo "   QAAC_WINEBOOT='$QAAC_WINEBOOT'"
 echo "   QAAC_WINEPREFIX='$QAAC_WINEPREFIX'"
 echo "   QAAC_ARCH='$QAAC_ARCH'"
@@ -378,11 +392,36 @@ echo "   QAAC_LIBSNDFILE_VERSION='$QAAC_LIBSNDFILE_VERSION'"
 echo "   QAAC_CLOSE_LIBSNDFILE_POPUP='$QAAC_CLOSE_LIBSNDFILE_POPUP'"
 echo "   QAAC_TAK_VERSION='$QAAC_TAK_VERSION'"
 
-info "setting up wine prefix '$QAAC_WINEPREFIX'."
-WINEPREFIX="$QAAC_WINEPREFIX" "$QAAC_WINEBOOT" -u >/dev/null
+if [ -n "$QAAC_XVFB" ]; then
+    echo "   QAAC_XVFB_LOGFILE='$QAAC_XVFB_LOGFILE'"
+    echo "   QAAC_XVFB_DISPLAY_FILE='$QAAC_XVFB_LOGFILE'"
+fi
 
-info "creating working directory '$QAAC_WORK_DIR'."
-mkdir -p "$QAAC_WORK_DIR"
+info "creating working directory"
+mkdir -vp "$QAAC_WORK_DIR"
+
+if [ -x "$QAAC_XVFB" ]; then
+    info "starting Xvfb server"
+
+    exec 3>$QAAC_XVFB_DISPLAY_FILE
+    ( "$QAAC_XVFB" -displayfd 3 2>&1 ) >"$QAAC_XVFB_LOGFILE" &
+    QAAC_XVFB_PID="$!"
+    info "spawned child Xvfb server. pid=$QAAC_XVFB_PID"
+
+    # wait for the display file to be written
+    while [ -z "$display_num" ]; do
+        display_num=$(tail -n 1 "$QAAC_XVFB_DISPLAY_FILE")
+        [ -n "$display_num" ] || sleep 1
+    done
+
+    info "got display number '$display_num'"
+
+    export DISPLAY=":$display_num.0"
+    info "set \$DISPLAY='$DISPLAY'"
+fi
+
+info "setting up wine prefix '$QAAC_WINEPREFIX'."
+WINEPREFIX="$QAAC_WINEPREFIX" "$QAAC_WINEBOOT"
 
 info "creating install directory '$QAAC_INSTALL_DIR'."
 mkdir -p "$QAAC_INSTALL_DIR"
@@ -406,6 +445,11 @@ if [ "$QAAC_ARCH" = "32" ]; then
     QAAC_EXE="$QAAC_INSTALL_DIR/qaac.exe"
 else
     QAAC_EXE="$QAAC_INSTALL_DIR/qaac64.exe"
+fi
+
+if [ -n "$QAAC_XVFB_PID" ]; then
+    info "killing Xvfb. pid=$QAAC_XVFB_PID"
+    kill "$QAAC_XVFB_PID"
 fi
 
 info "checking qaac"
