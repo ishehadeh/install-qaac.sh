@@ -7,8 +7,13 @@ This script installs [qaac](https://github.com/nu774/qaac) on linux.
 - `wine`: https://www.winehq.org/
 - `7zip`: https://www.7-zip.org/
 - `wget`: https://www.gnu.org/software/wget
+- `curl`: https://curl.haxx.se/
 
-Optional Dependencies:
+Either `curl` or `wget` can be installed, both are not required.
+If both  are installed `wget` is used.
+To use `curl` instead set `QAAC_CURL="$(which curl)"`.
+
+### Optional Dependencies:
 - `Xvrb`: allows X11 programs to be run headless
 
 Most distributions will have these applications in their package managers.
@@ -33,6 +38,7 @@ __Location Settings:__
 
 __Program Settings:__
 - QAAC_WGET: path to wget executable [default: search `PATH` for `wget`]
+- QAAC_CURL: path to curl executable. Unless set explicitly, only used when wget is not found [default: search `PATH` for `curl`]
 - QAAC_7ZIP: path to 7z executable [default: search `PATH` for `7z`]
 - QAAC_WINE: path to wine executable [default: search `PATH` for `wine`]
 - QAAC_WINEBOOT: path to wineboot executable [default: search `PATH` for `wineboot`]
@@ -49,6 +55,21 @@ Set any of these variables to _disabled_ to skip installing them
 
 __Misc. Settings:__
 - QAAC_CLOSE_LIBSNDFILE_POPUP: libsndfile opens a popup asking for donations as part of the install script, to automatically close it set this variable to `1` [default: unset]
+- QAAC_KEEP_WORK_DIR: set to '1' to keep the working directory after finishing [default: unset]
+
+### Examples
+
+#### Headless 32-bit Install
+
+```sh
+QAAC_XVFB=1 install-qaac.sh 32 2.68
+```
+
+#### Download files using Curl, don't install libsndfile
+
+```sh
+QAAC_CURL=/usr/bin/curl QAAC_LIBSNDFILE=disabled install-qaac.sh 64 2.68
+```
 
 ## Sources for Binaries
 

@@ -15,13 +15,15 @@ usage() {
     echo ""
     echo "  ENVIRONMENT"
     echo "     QAAC_WGET ..................... path to wget executable (https://www.gnu.org/software/wget) [default: search \$PATH for 'wget']"
+    echo "     QAAC_CURL ..................... path to curl executablel. Unless set explicitly, only used when wget is not found (https://curl.haxx.se/) [default: search \$PATH for 'curl']"
     echo "     QAAC_7ZIP ..................... path to 7zip executable (https://www.7-zip.org/) [default: search \$PATH for '7z']"
     echo "     QAAC_WINE ..................... path to wine executable (https://www.winehq.org/) [default: search \$PATH for 'wine']"
-    echo "     QAAC_XVFB ..................... path xvfb executable. If set, all X applications will be pointed toward a new Xvfb server [default: unset]"
+    echo "     QAAC_XVFB ..................... path xvfb executable, or '1' to find Xvfb automatically. If set, all X applications will be pointed toward a new Xvfb server [default: unset]"
     echo "     QAAC_WINEBOOT ................. path to wineboot executable (https://www.winehq.org/) [default: search \$PATH for 'wineboot']"
     echo "     QAAC_WORK_DIR ................. directory to store logs and downloaded files [default: '/tmp/qaac-sh-wd']"
     echo "     QAAC_WINEPREFIX ............... wineprefix for qaac installation [default: '\$WINEPREFIX' or '\$HOME/.wine']"
     echo "     QAAC_INSTALL_DIR .............. directory to install qaac.exe and dynamic libraries [default: '\$QAAC_WINPREFIX/Program Files/qaac.exe' or '\$QAAC_WINPREFIX/Program Files (x86)/qaac.exe']"
+    echo "     QAAC_KEEP_WORK_DIR ............ set to '1' to keep work directory after finished [default: unset]"
     echo "     QAAC_CLOSE_LIBSNDFILE_POPUP ... set to '1' to automatically close the libsndfile popup asking for donations [default: unset]"
     echo ""
     echo "    Extra libraries - these add support for decoding various formats. Set any of these variables to 'disabled' to skip installing them"
@@ -55,6 +57,25 @@ fail() {
     exit 1
 }
 
+download_wget() {
+    if ! "$QAAC_WGET" --show-progress --output-document "$2" --append-output "$QAAC_WGET_LOGFILE" "$1"; then
+        error "download failed"
+
+        if [ -f "$1" ]; then
+            info "removing '$1'"
+            rm "$1"
+        fi
+
+        info "last 10 lines of '$QAAC_WGET_LOGFILE'"
+        tail -n 10 "$QAAC_WGET_LOGFILE"
+        exit 1
+    fi
+}
+
+download_curl() {
+    "$QAAC_CURL" -L "$1" -o "$2"
+}
+
 # USAGE: download <URL> <DOCUMENT>
 #   download URL and save the content to DOCUMENT
 #   if DOCUMENT already exists this function does nothing
@@ -63,17 +84,10 @@ download() {
     if [ -f "$2" ]; then
         info "'$2' already exists, skipping download"
     else
-        if ! "$QAAC_WGET" --show-progress --output-document "$2" --append-output "$QAAC_WGET_LOGFILE" "$1"; then
-            error "download failed"
-
-            if [ -f "$1" ]; then
-                info "removing '$1'"
-                rm "$1"
-            fi
-
-            info "last 10 lines of '$QAAC_WGET_LOGFILE'"
-            tail -n 10 "$QAAC_WGET_LOGFILE"
-            exit 1
+        if [ -x "$QAAC_WGET" ]; then
+            download_wget "$1" "$2"
+        else
+            download_curl "$1" "$2"
         fi
     fi
 }
@@ -272,26 +286,36 @@ fi
 # allows the programs to list all missing deps before exiting
 dep_error=0
 
-if [ ! -x "$QAAC_WGET" ]; then
+# if neither curl nor wget have been set explicitly try to find wget first
+if [ ! -n "$QAAC_CURL" ] && [ ! -n "$QAAC_WGET" ]; then
     QAAC_WGET="$(command -v wget || exit 0)"
 fi
 
-if [ ! -x "$QAAC_7ZIP" ]; then
+# if curl and wget are still not set, try curl
+if [ ! -n "$QAAC_WGET" ] && [ ! -n "$QAAC_CURL" ]; then
+    QAAC_CURL="$(command -v curl || exit 0)"
+fi
+
+if [ ! -n "$QAAC_7ZIP" ]; then
     QAAC_7ZIP="$(command -v 7z || exit 0)"
 fi
 
-if [ ! -x "$QAAC_WINE" ]; then
+if [ ! -n "$QAAC_WINE" ]; then
     QAAC_WINE="$(command -v wine || exit 0)"
 fi
 
-if [ ! -x "$QAAC_WINEBOOT" ]; then
+if [ ! -n "$QAAC_WINEBOOT" ]; then
     QAAC_WINEBOOT="$(command -v wineboot || exit 0)"
 fi
 
-if [ ! -x "$QAAC_WGET" ]; then
-    error "wget is required, please make sure it is in \$PATH, or set \$QAAC_WGET manually"
+if [ ! -x "$QAAC_WGET" ] && [ ! -x "$QAAC_CURL" ]; then
+    error "wget or curl is required, please make one of them is in your \$PATH, or set \$QAAC_WGET, or \$QAAC_CURL manually"
     if [ -n "$QAAC_WGET" ]; then
         info "\$QAAC_WGET is set, but is not an executable file. QAAC_WGET='$QAAC_WGET'"
+    fi
+
+    if [ -n "$QAAC_CURL" ]; then
+        info "\$QAAC_CURL is set, but is not an executable file. QAAC_WGET='$QAAC_CURL'"
     fi
 
     dep_error=1
@@ -346,7 +370,12 @@ if [ -z "$QAAC_WINEPREFIX" ]; then
 fi
 
 if [ -n "$QAAC_XVFB" ]; then
-    if [ ! -x "$QAAC_XVFB" ]; then
+    if [ "$QAAC_XVFB" = "1" ]; then
+        QAAC_XVFB="$(command -v Xvfb || exit 0)"
+        if [ -z "$QAAC_XVFB" ]; then
+            fail "could not find Xvfb in path. Please set \$QAAC_XVFB manually."
+        fi
+    elif [ ! -x "$QAAC_XVFB" ]; then
         fail "\$QAAC_XVFB is set, but is not an executable file. \$QAAC_XVFB='$QAAC_XVFB'"
     fi
 
@@ -376,6 +405,7 @@ QAAC_TAK_VERSION=${QAAC_TAK_VERSION:="2.3.0"}
 
 info "beginning installation"
 echo "   QAAC_WGET='$QAAC_WGET'"
+echo "   QAAC_CURL='$QAAC_CURL'"
 echo "   QAAC_7ZIP='$QAAC_7ZIP'"
 echo "   QAAC_WINE='$QAAC_WINE'"
 echo "   QAAC_XVFB='$QAAC_XVFB'"
@@ -384,13 +414,17 @@ echo "   QAAC_WINEPREFIX='$QAAC_WINEPREFIX'"
 echo "   QAAC_ARCH='$QAAC_ARCH'"
 echo "   QAAC_VERSION='$QAAC_VERSION'"
 echo "   QAAC_WORK_DIR='$QAAC_WORK_DIR'"
+echo "   QAAC_KEEP_WORK_DIR='$QAAC_KEEP_WORK_DIR'"
 echo "   QAAC_INSTALL_DIR='$QAAC_INSTALL_DIR'"
-echo "   QAAC_WGET_LOGFILE='$QAAC_WGET_LOGFILE'"
 echo "   QAAC_LIBFLAC_VERSION='$QAAC_LIBFLAC_VERSION'"
 echo "   QAAC_WAVPACK_VERSION='$QAAC_WAVPACK_VERSION'"
 echo "   QAAC_LIBSNDFILE_VERSION='$QAAC_LIBSNDFILE_VERSION'"
 echo "   QAAC_CLOSE_LIBSNDFILE_POPUP='$QAAC_CLOSE_LIBSNDFILE_POPUP'"
 echo "   QAAC_TAK_VERSION='$QAAC_TAK_VERSION'"
+
+if [ -x "$QAAC_WGET" ]; then
+    echo "   QAAC_WGET_LOGFILE='$QAAC_WGET_LOGFILE'"
+fi
 
 if [ -n "$QAAC_XVFB" ]; then
     echo "   QAAC_XVFB_LOGFILE='$QAAC_XVFB_LOGFILE'"
@@ -407,6 +441,8 @@ if [ -x "$QAAC_XVFB" ]; then
     ( "$QAAC_XVFB" -displayfd 3 2>&1 ) >"$QAAC_XVFB_LOGFILE" &
     QAAC_XVFB_PID="$!"
     info "spawned child Xvfb server. pid=$QAAC_XVFB_PID"
+
+    trap 'kill "$QAAC_XVFB_PID"' EXIT
 
     # wait for the display file to be written
     while [ -z "$display_num" ]; do
@@ -447,15 +483,12 @@ else
     QAAC_EXE="$QAAC_INSTALL_DIR/qaac64.exe"
 fi
 
-if [ -n "$QAAC_XVFB_PID" ]; then
-    info "killing Xvfb. pid=$QAAC_XVFB_PID"
-    kill "$QAAC_XVFB_PID"
-fi
-
 info "checking qaac"
 if env WINEPREFIX="$QAAC_WINEPREFIX" "$QAAC_WINE" "$QAAC_EXE" --check; then
-    info "removing working directory"
-    rm -vr "$QAAC_WORK_DIR"
+    if [ " $QAAC_KEEP_WORK_DIR" != " 1" ]; then
+        info "removing working directory"
+        rm -vr "$QAAC_WORK_DIR"
+    fi
 
     info "qaac installed, run it with this command:"
     echo "    env WINEPREFIX='$QAAC_WINEPREFIX' '$QAAC_WINE' '$QAAC_EXE'"
