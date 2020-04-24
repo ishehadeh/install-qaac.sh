@@ -43,6 +43,9 @@ Set any of these variables to _disabled_ to skip installing them
 - QAAC_TAK_VERSION: version of TAK to install [default: 2.3.0]
 - QAAC_LIBSNDFILE_VERSION: version of libsndfile to install [default: 1.0.28]
 
+__Misc. Settings:__
+- QAAC_CLOSE_LIBSNDFILE_POPUP: libsndfile opens a popup asking for donations as part of the install script, to automatically close it set this variable to `1` [default: unset]
+
 ## Sources for Binaries
 
 This script does not build any of the software it installs, it downloads pre-built binaries from various sources.

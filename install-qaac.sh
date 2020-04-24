@@ -14,13 +14,14 @@ usage() {
     echo "     VERSION ... version of qaac to install"
     echo ""
     echo "  ENVIRONMENT"
-    echo "     QAAC_WGET .......... path to wget executable (https://www.gnu.org/software/wget) [default: search \$PATH for 'wget']"
-    echo "     QAAC_7ZIP .......... path to 7zip executable (https://www.7-zip.org/) [default: search \$PATH for '7z']"
-    echo "     QAAC_WINE .......... path to wine executable (https://www.winehq.org/) [default: search \$PATH for 'wine']"
-    echo "     QAAC_WINEBOOT ...... path to wineboot executable (https://www.winehq.org/) [default: search \$PATH for 'wineboot']"
-    echo "     QAAC_WORK_DIR ...... directory to store logs and downloaded files [default: '\$QAAC_WINPREFIX/qaac-sh-wd']"
-    echo "     QAAC_WINEPREFIX .... wineprefix for qaac installation [default: '\$WINEPREFIX' or '\$HOME/.wine']"
-    echo "     QAAC_INSTALL_DIR ... directory to install qaac.exe and dynamic libraries [default: '\$QAAC_WINPREFIX/Program Files/qaac.exe' or '\$QAAC_WINPREFIX/Program Files (x86)/qaac.exe']"
+    echo "     QAAC_WGET ..................... path to wget executable (https://www.gnu.org/software/wget) [default: search \$PATH for 'wget']"
+    echo "     QAAC_7ZIP ..................... path to 7zip executable (https://www.7-zip.org/) [default: search \$PATH for '7z']"
+    echo "     QAAC_WINE ..................... path to wine executable (https://www.winehq.org/) [default: search \$PATH for 'wine']"
+    echo "     QAAC_WINEBOOT ................. path to wineboot executable (https://www.winehq.org/) [default: search \$PATH for 'wineboot']"
+    echo "     QAAC_WORK_DIR ................. directory to store logs and downloaded files [default: '\$QAAC_WINPREFIX/qaac-sh-wd']"
+    echo "     QAAC_WINEPREFIX ............... wineprefix for qaac installation [default: '\$WINEPREFIX' or '\$HOME/.wine']"
+    echo "     QAAC_INSTALL_DIR .............. directory to install qaac.exe and dynamic libraries [default: '\$QAAC_WINPREFIX/Program Files/qaac.exe' or '\$QAAC_WINPREFIX/Program Files (x86)/qaac.exe']"
+    echo "     QAAC_CLOSE_LIBSNDFILE_POPUP ... set to '1' to automatically close the libsndfile popup asking for donations [default: unset]"
     echo ""
     echo "    Extra libraries - these add support for decoding various formats. Set any of these variables to 'disabled' to skip installing them"
     echo "     QAAC_LIBFLAC_VERSION ....... version of libFLAC to install [default: 1.3.3]"
@@ -55,7 +56,7 @@ fail() {
 
 # USAGE: download <URL> <DOCUMENT>
 #   download URL and save the content to DOCUMENT
-#   if DOCUMENT already exists this function does notion
+#   if DOCUMENT already exists this function does nothing
 download() {
     info "downloading '$1' to '$2'"
     if [ -f "$2" ]; then
@@ -207,6 +208,22 @@ install_tak() {
     info "finished installing TAK"
 }
 
+# USAGE close_libsndfile_popup
+#   first wait for a process named 'sndfile-about.e' to appear.
+#   once the process has been found kill it.
+#   the process is name is trucated to'sndfile-about.e' due to the 16-character COMM limit.
+close_libsndfile_popup() {
+    info "will close libsndfile popup when it appears"
+    until pids="$(pidof 'sndfile-about.e')"; do
+        sleep 1
+    done
+
+    info "found sndfile-about.e, \$pids='$pids'"
+    for pid in $pids; do
+        kill "$pid"
+    done
+}
+
 # USAGE install_libsndfile <VERSION> <ARCH>
 #    download libsndfile installer from mega-nerd.com
 #    runs the installer and copies libsndfile-1.dll to the install directory
@@ -220,6 +237,10 @@ install_libsndfile() {
     download "http://www.mega-nerd.com/libsndfile/files/$libsndfile_installer_name" "$libsndfile_installer_path"
 
     info "running libsndfile installer"
+    if [ " $QAAC_CLOSE_LIBSNDFILE_POPUP" = " 1" ]; then
+        close_libsndfile_popup &
+    fi
+
     env WINEPREFIX="$QAAC_WINEPREFIX" "$QAAC_WINE" "$libsndfile_installer_path" "/verysilent"
 
     if [ "$2" = "32" ]; then
@@ -354,6 +375,7 @@ echo "   QAAC_WGET_LOGFILE='$QAAC_WGET_LOGFILE'"
 echo "   QAAC_LIBFLAC_VERSION='$QAAC_LIBFLAC_VERSION'"
 echo "   QAAC_WAVPACK_VERSION='$QAAC_WAVPACK_VERSION'"
 echo "   QAAC_LIBSNDFILE_VERSION='$QAAC_LIBSNDFILE_VERSION'"
+echo "   QAAC_CLOSE_LIBSNDFILE_POPUP='$QAAC_CLOSE_LIBSNDFILE_POPUP'"
 echo "   QAAC_TAK_VERSION='$QAAC_TAK_VERSION'"
 
 info "setting up wine prefix '$QAAC_WINEPREFIX'."
@@ -389,7 +411,7 @@ fi
 info "checking qaac"
 if env WINEPREFIX="$QAAC_WINEPREFIX" "$QAAC_WINE" "$QAAC_EXE" --check; then
     info "removing working directory"
-    rm -vr "$QAAC_WORK_DIR"
+    # rm -vr "$QAAC_WORK_DIR"
 
     info "qaac installed, run it with this command:"
     echo "    env WINEPREFIX='$QAAC_WINEPREFIX' '$QAAC_WINE' '$QAAC_EXE'"
