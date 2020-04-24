@@ -411,7 +411,7 @@ fi
 info "checking qaac"
 if env WINEPREFIX="$QAAC_WINEPREFIX" "$QAAC_WINE" "$QAAC_EXE" --check; then
     info "removing working directory"
-    # rm -vr "$QAAC_WORK_DIR"
+    rm -vr "$QAAC_WORK_DIR"
 
     info "qaac installed, run it with this command:"
     echo "    env WINEPREFIX='$QAAC_WINEPREFIX' '$QAAC_WINE' '$QAAC_EXE'"
