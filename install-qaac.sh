@@ -46,11 +46,11 @@ error() {
     log ERROR "$1"
 }
 
-# USAGE: fail <MESSAGE> [CODE]
-#   log an error and exit with CODE
+# USAGE: fail <MESSAGE>
+#   log an error and exit with status code 1
 fail() {
     error "$1"
-    exit "$(if [ -n "$2" ]; then echo "$2"; else echo "1"; fi)"
+    exit 1
 }
 
 # USAGE: download <URL> <DOCUMENT>
