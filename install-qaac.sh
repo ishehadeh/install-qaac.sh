@@ -381,18 +381,18 @@ if [ "$QAAC_TAK_VERSION" != "disabled" ]; then
 fi
 
 if [ "$QAAC_ARCH" = "32" ]; then
-    QAAC_WIN_PATH='C:\Program Files (x86)\qaac\qaac.exe'
+    QAAC_EXE="$QAAC_INSTALL_DIR/qaac.exe"
 else
-    QAAC_WIN_PATH='C:\Program Files\qaac\qaac64.exe'
+    QAAC_EXE="$QAAC_INSTALL_DIR/qaac64.exe"
 fi
 
 info "checking qaac"
-if env WINEPREFIX="$QAAC_WINEPREFIX" "$QAAC_WINE" "$QAAC_WIN_PATH" --check; then
+if env WINEPREFIX="$QAAC_WINEPREFIX" "$QAAC_WINE" "$QAAC_EXE" --check; then
     info "removing working directory"
     rm -vr "$QAAC_WORK_DIR"
 
     info "qaac installed, run it with this command:"
-    echo "    env WINEPREFIX='$QAAC_WINEPREFIX' '$QAAC_WINE' '$QAAC_WIN_PATH'"
+    echo "    env WINEPREFIX='$QAAC_WINEPREFIX' '$QAAC_WINE' '$QAAC_EXE'"
 else
     fail "qaac --check failed"
 fi
