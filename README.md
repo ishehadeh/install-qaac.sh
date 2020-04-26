@@ -78,7 +78,7 @@ Here is a list of the websites it downloads from:
 
 - qaac: downloaded from its github releases page (https://github.com/nu774/qaac/releases/download/...)
 - iTunes: downloaded from Apple's website (https://www.apple.com/itunes/download/...)
-- libFLAC: downloaded rarewares.org (http://www.rarewares.org/files/lossless/flac_dll...)
-- WavPack: downloaded its github releases page (https://github.com/dbry/WavPack/releases/download/...)
-- TAK: downloaded the author's website, thbeck.de (http://thbeck.de/Download/...)
-- libsndfile: downloaded the author's website, mega-nerd.com (http://www.mega-nerd.com/libsndfile/files/...)
+- libFLAC: downloaded from rarewares.org (http://www.rarewares.org/files/lossless/flac_dll...)
+- WavPack: downloaded from its github releases page (https://github.com/dbry/WavPack/releases/download/...)
+- TAK: downloaded from the author's website, thbeck.de (http://thbeck.de/Download/...)
+- libsndfile: downloaded from the author's website, mega-nerd.com (http://www.mega-nerd.com/libsndfile/files/...)
