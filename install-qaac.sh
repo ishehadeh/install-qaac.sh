@@ -413,7 +413,7 @@ fi
 
 if [ -n "$QAAC_XVFB" ]; then
     echo "   QAAC_XVFB_LOGFILE='$QAAC_XVFB_LOGFILE'"
-    echo "   QAAC_XVFB_DISPLAY_FILE='$QAAC_XVFB_LOGFILE'"
+    echo "   QAAC_XVFB_DISPLAY_FILE='$QAAC_XVFB_DISPLAY_FILE'"
 fi
 
 info "creating working directory"
