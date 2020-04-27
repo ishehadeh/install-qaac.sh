@@ -41,7 +41,6 @@ __Program Settings:__
 - QAAC_CURL: path to curl executable. Unless set explicitly, only used when wget is not found [default: search `PATH` for `curl`]
 - QAAC_7ZIP: path to 7z executable [default: search `PATH` for `7z`]
 - QAAC_WINE: path to wine executable [default: search `PATH` for `wine`]
-- QAAC_WINEBOOT: path to wineboot executable [default: search `PATH` for `wineboot`]
 - QAAC_XVFB: path to Xvfb executable [default: unset]
 
 __Optional Dependency Settings:__

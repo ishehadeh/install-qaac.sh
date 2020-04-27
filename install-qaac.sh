@@ -19,7 +19,6 @@ usage() {
     echo "     QAAC_7ZIP ..................... path to 7zip executable (https://www.7-zip.org/) [default: search \$PATH for '7z']"
     echo "     QAAC_WINE ..................... path to wine executable (https://www.winehq.org/) [default: search \$PATH for 'wine']"
     echo "     QAAC_XVFB ..................... path xvfb executable, or '1' to find Xvfb automatically. If set, all X applications will be pointed toward a new Xvfb server [default: unset]"
-    echo "     QAAC_WINEBOOT ................. path to wineboot executable (https://www.winehq.org/) [default: search \$PATH for 'wineboot']"
     echo "     QAAC_WORK_DIR ................. directory to store logs and downloaded files [default: '/tmp/qaac-sh-wd']"
     echo "     QAAC_WINEPREFIX ............... wineprefix for qaac installation [default: '\$WINEPREFIX' or '\$HOME/.wine']"
     echo "     QAAC_INSTALL_DIR .............. directory to install qaac.exe and dynamic libraries [default: '\$QAAC_WINPREFIX/Program Files/qaac.exe' or '\$QAAC_WINPREFIX/Program Files (x86)/qaac.exe']"
@@ -304,10 +303,6 @@ if [ ! -n "$QAAC_WINE" ]; then
     QAAC_WINE="$(command -v wine || exit 0)"
 fi
 
-if [ ! -n "$QAAC_WINEBOOT" ]; then
-    QAAC_WINEBOOT="$(command -v wineboot || exit 0)"
-fi
-
 if [ ! -x "$QAAC_WGET" ] && [ ! -x "$QAAC_CURL" ]; then
     error "wget or curl is required, please make one of them is in your \$PATH, or set \$QAAC_WGET, or \$QAAC_CURL manually"
     if [ -n "$QAAC_WGET" ]; then
@@ -334,15 +329,6 @@ if [ ! -x "$QAAC_WINE" ]; then
     error "wine is required, please make sure it is in \$PATH, or set \$QAAC_WINE manually"
     if [ -n "$QAAC_WINE" ]; then
         info "\$QAAC_WINE is set, but is not an executable file. QAAC_WINE='$QAAC_WINE'"
-    fi
-
-    dep_error=1
-fi
-
-if [ ! -x "$QAAC_WINEBOOT" ]; then
-    error "wineboot is required, please make sure it is in \$PATH, or set \$QAAC_WINEBOT manually"
-    if [ -n "$QAAC_WINEBOOT" ]; then
-        info "\$QAAC_WINEBOOT is set, but is not an executable file. QAAC_WINEBOOT='$QAAC_WINEBOOT'"
     fi
 
     dep_error=1
@@ -409,7 +395,6 @@ echo "   QAAC_CURL='$QAAC_CURL'"
 echo "   QAAC_7ZIP='$QAAC_7ZIP'"
 echo "   QAAC_WINE='$QAAC_WINE'"
 echo "   QAAC_XVFB='$QAAC_XVFB'"
-echo "   QAAC_WINEBOOT='$QAAC_WINEBOOT'"
 echo "   QAAC_WINEPREFIX='$QAAC_WINEPREFIX'"
 echo "   QAAC_ARCH='$QAAC_ARCH'"
 echo "   QAAC_VERSION='$QAAC_VERSION'"
@@ -438,7 +423,7 @@ if [ -x "$QAAC_XVFB" ]; then
     info "starting Xvfb server"
 
     exec 3>$QAAC_XVFB_DISPLAY_FILE
-    ( "$QAAC_XVFB" -displayfd 3 2>&1 ) >"$QAAC_XVFB_LOGFILE" &
+    ("$QAAC_XVFB" -displayfd 3 2>&1) >"$QAAC_XVFB_LOGFILE" &
     QAAC_XVFB_PID="$!"
     info "spawned child Xvfb server. pid=$QAAC_XVFB_PID"
 
@@ -457,7 +442,7 @@ if [ -x "$QAAC_XVFB" ]; then
 fi
 
 info "setting up wine prefix '$QAAC_WINEPREFIX'."
-WINEPREFIX="$QAAC_WINEPREFIX" "$QAAC_WINEBOOT"
+WINEPREFIX="$QAAC_WINEPREFIX" "$QAAC_WINE" wineboot
 
 info "creating install directory '$QAAC_INSTALL_DIR'."
 mkdir -p "$QAAC_INSTALL_DIR"
